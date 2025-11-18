@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Easel React Example</title>
+    
+    <!-- Easel CSS -->
+    <link rel="stylesheet" href="../../dist/easel.min.css">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #f5f5f5;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: #2c3e50;
+            color: white;
+            padding: 20px;
+        }
+        
+        .header h1 {
+            margin: 0 0 10px 0;
+            font-size: 28px;
+        }
+        
+        .header p {
+            margin: 0;
+            opacity: 0.9;
+            font-size: 14px;
+        }
+        
+        .controls {
+            padding: 20px;
+            border-bottom: 1px solid #e0e0e0;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        
+        .controls button {
+            padding: 10px 20px;
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: background 0.2s;
+        }
+        
+        .controls button:hover {
+            background: #2980b9;
+        }
+        
+        .controls button.danger {
+            background: #e74c3c;
+        }
+        
+        .controls button.danger:hover {
+            background: #c0392b;
+        }
+        
+        .controls button.success {
+            background: #27ae60;
+        }
+        
+        .controls button.success:hover {
+            background: #229954;
+        }
+        
+        .controls label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+        }
+        
+        .controls input[type="color"] {
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        
+        .canvas-wrapper {
+            padding: 20px;
+            background: #fafafa;
+            min-height: 600px;
+        }
+        
+        .info {
+            padding: 20px;
+            background: #ecf0f1;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        
+        .info h3 {
+            margin: 0 0 10px 0;
+            color: #2c3e50;
+        }
+        
+        .info code {
+            background: #34495e;
+            color: #ecf0f1;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎨 Easel React Component</h1>
+            <p>Interactive canvas drawing with React hooks and modern API</p>
+        </div>
+        
+        <div class="controls">
+            <button id="btnSave" class="success">💾 Save Image</button>
+            <button id="btnLoad">📂 Load Image</button>
+            <button id="btnClear" class="danger">🗑️ Clear Canvas</button>
+            <button id="btnUndo">↶ Undo</button>
+            <button id="btnRedo">↷ Redo</button>
+            
+            <label>
+                Background:
+                <input type="color" id="bgColor" value="#ffffff">
+            </label>
+            
+            <button id="btnPencil">✏️ Pencil</button>
+            <button id="btnEraser">🧹 Eraser</button>
+            <button id="btnCircle">⭕ Circle</button>
+            <button id="btnRect">▭ Rectangle</button>
+        </div>
+        
+        <div class="canvas-wrapper">
+            <div id="root"></div>
+        </div>
+        
+        <div class="info">
+            <h3>How to use:</h3>
+            <p>
+                This example demonstrates the Easel React component. 
+                The component exposes methods via <code>ref</code> that you can call from your React code.
+                Try drawing on the canvas, changing colors, and using the toolbar controls!
+            </p>
+        </div>
+    </div>
+
+    <!-- Load React and ReactDOM from CDN -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    
+    <!-- Load Easel core library -->
+    <script src="../../dist/easel.standalone.min.js"></script>
+    
+    <!-- Load Babel standalone for JSX transformation -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <!-- React App -->
+    <script type="text/babel">
+        const { useState, useRef, useEffect } = React;
+        
+        // Import the component (in real app, you'd import from the package)
+        // For this example, we'll define it inline
+        const EaselCanvas = React.forwardRef((props, ref) => {
+            const {
+                width = 800,
+                height = 600,
+                toolbars = {},
+                plugins = [],
+                defaultActivePlugin = null,
+                backgroundColor = '#FFFFFF',
+                transparentBackground = false,
+                toolbarSize = 32,
+                toolbarSizeTouch = 48,
+                fullscreenMode = false,
+                selectMode = true,
+                onChange = null,
+                onSave = null,
+                onObjectAdded = null,
+                onObjectModified = null,
+                onObjectRemoved = null,
+                onSelectionCreated = null,
+                onSelectionCleared = null,
+                ...customOptions
+            } = props;
+
+            const containerRef = useRef(null);
+            const easelInstanceRef = useRef(null);
+
+            useEffect(() => {
+                if (!containerRef.current || !window.Easel) {
+                    console.error('Easel library not loaded or container not ready');
+                    return;
+                }
+
+                const easelConfig = {
+                    ...customOptions,
+                    canvasWidth: width,
+                    canvasHeight: height,
+                    toolbars,
+                    plugins,
+                    defaultActivePlugin,
+                    backgroundColor,
+                    transparentBackground,
+                    toolbarSize,
+                    toolbarSizeTouch,
+                    fullscreenMode,
+                    selectMode,
+                };
+
+                try {
+                    const easelInstance = new window.Easel(containerRef.current, easelConfig);
+                    easelInstanceRef.current = easelInstance;
+
+                    if (onChange) easelInstance.on('canvas:changed', onChange);
+                    if (onSave) easelInstance.on('canvas:save', onSave);
+                    if (onObjectAdded) easelInstance.on('object:added', onObjectAdded);
+                    if (onObjectModified) easelInstance.on('object:modified', onObjectModified);
+                    if (onObjectRemoved) easelInstance.on('object:removed', onObjectRemoved);
+                    if (onSelectionCreated) easelInstance.on('selection:created', onSelectionCreated);
+                    if (onSelectionCleared) easelInstance.on('selection:cleared', onSelectionCleared);
+
+                } catch (error) {
+                    console.error('Failed to initialize Easel:', error);
+                }
+
+                return () => {
+                    if (easelInstanceRef.current) {
+                        try {
+                            easelInstanceRef.current.destroy();
+                        } catch (error) {
+                            console.error('Error destroying Easel instance:', error);
+                        }
+                        easelInstanceRef.current = null;
+                    }
+                };
+            }, []);
+
+            useEffect(() => {
+                if (easelInstanceRef.current && easelInstanceRef.current.api) {
+                    try {
+                        easelInstanceRef.current.api.setSize(width, height);
+                    } catch (error) {
+                        console.error('Error updating Easel size:', error);
+                    }
+                }
+            }, [width, height]);
+
+            React.useImperativeHandle(ref, () => ({
+                getInstance: () => easelInstanceRef.current,
+                getImageDataUrl: (format = 'png', quality = 1.0) => {
+                    if (!easelInstanceRef.current || !easelInstanceRef.current.api) return null;
+                    return easelInstanceRef.current.api.getImageDataUrl(format, quality);
+                },
+                getImageBlob: (callback, format = 'png', quality = 1.0) => {
+                    if (!easelInstanceRef.current || !easelInstanceRef.current.api) return;
+                    easelInstanceRef.current.api.getImageBlob(callback, format, quality);
+                },
+                loadImage: (imageData) => {
+                    if (!easelInstanceRef.current || !easelInstanceRef.current.api) return;
+                    easelInstanceRef.current.api.loadImage(imageData);
+                },
+                clear: () => {
+                    if (!easelInstanceRef.current || !easelInstanceRef.current.api) return;
+                    easelInstanceRef.current.api.clearCanvas();
+                },
+                setBackgroundColor: (color) => {
+                    if (!easelInstanceRef.current || !easelInstanceRef.current.api) return;
+                    easelInstanceRef.current.api.setBackgroundColor(color);
+                },
+                setSize: (w, h) => {
+                    if (!easelInstanceRef.current || !easelInstanceRef.current.api) return;
+                    easelInstanceRef.current.api.setSize(w, h);
+                },
+                undo: () => {
+                    if (!easelInstanceRef.current) return;
+                    easelInstanceRef.current.undo();
+                },
+                redo: () => {
+                    if (!easelInstanceRef.current) return;
+                    easelInstanceRef.current.redo();
+                },
+                activatePlugin: (pluginName) => {
+                    if (!easelInstanceRef.current) return;
+                    easelInstanceRef.current.trigger('canvas:tool:activated', pluginName);
+                },
+                getFabricCanvas: () => {
+                    if (!easelInstanceRef.current || !easelInstanceRef.current.fCanvas) return null;
+                    return easelInstanceRef.current.fCanvas;
+                },
+            }));
+
+            return (
+                <div 
+                    ref={containerRef}
+                    className="easel-react-wrapper"
+                    style={{ 
+                        width: '100%', 
+                        height: '100%',
+                        position: 'relative'
+                    }}
+                />
+            );
+        });
+
+        // Main App Component
+        function App() {
+            const easelRef = useRef();
+            const [bgColor, setBgColor] = useState('#ffffff');
+            
+            const handleSave = () => {
+                if (easelRef.current) {
+                    const dataUrl = easelRef.current.getImageDataUrl('png');
+                    if (dataUrl) {
+                        const link = document.createElement('a');
+                        link.download = 'easel-drawing.png';
+                        link.href = dataUrl;
+                        link.click();
+                    }
+                }
+            };
+            
+            const handleLoad = () => {
+                const input = document.createElement('input');
+                input.type = 'file';
+                input.accept = 'image/*';
+                input.onchange = (e) => {
+                    const file = e.target.files[0];
+                    if (file) {
+                        const reader = new FileReader();
+                        reader.onload = (event) => {
+                            if (easelRef.current) {
+                                easelRef.current.loadImage(event.target.result);
+                            }
+                        };
+                        reader.readAsDataURL(file);
+                    }
+                };
+                input.click();
+            };
+            
+            const handleClear = () => {
+                if (easelRef.current && confirm('Clear the entire canvas?')) {
+                    easelRef.current.clear();
+                }
+            };
+            
+            const handleUndo = () => {
+                if (easelRef.current) {
+                    easelRef.current.undo();
+                }
+            };
+            
+            const handleRedo = () => {
+                if (easelRef.current) {
+                    easelRef.current.redo();
+                }
+            };
+            
+            const handleBgColorChange = (color) => {
+                setBgColor(color);
+                if (easelRef.current) {
+                    easelRef.current.setBackgroundColor(color);
+                }
+            };
+            
+            const activateTool = (toolName) => {
+                if (easelRef.current) {
+                    const instance = easelRef.current.getInstance();
+                    if (instance) {
+                        instance.trigger('canvas:tool:activated', toolName);
+                    }
+                }
+            };
+            
+            useEffect(() => {
+                // Wire up external buttons
+                document.getElementById('btnSave').onclick = handleSave;
+                document.getElementById('btnLoad').onclick = handleLoad;
+                document.getElementById('btnClear').onclick = handleClear;
+                document.getElementById('btnUndo').onclick = handleUndo;
+                document.getElementById('btnRedo').onclick = handleRedo;
+                document.getElementById('bgColor').onchange = (e) => handleBgColorChange(e.target.value);
+                document.getElementById('btnPencil').onclick = () => activateTool('Pencil');
+                document.getElementById('btnEraser').onclick = () => activateTool('Eraser');
+                document.getElementById('btnCircle').onclick = () => activateTool('Circle');
+                document.getElementById('btnRect').onclick = () => activateTool('Rectangle');
+            }, []);
+            
+            return (
+                <EaselCanvas
+                    ref={easelRef}
+                    width={900}
+                    height={500}
+                    backgroundColor={bgColor}
+                    toolbars={{
+                        drawingTools: {
+                            position: 'top',
+                            positionType: 'inside'
+                        },
+                        toolOptions: {
+                            position: 'left',
+                            positionType: 'inside'
+                        }
+                    }}
+                    onChange={() => console.log('Canvas changed')}
+                    onObjectAdded={(e) => console.log('Object added:', e)}
+                />
+            );
+        }
+        
+        // Render the app
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>

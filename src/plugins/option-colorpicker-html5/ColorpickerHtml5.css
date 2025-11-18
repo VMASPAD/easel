@@ -1,0 +1,29 @@
+
+.editable-canvas-colorpicker {
+    width: 32px;
+    background: var(--easel-color-surface, #fff);
+    height: 32px;
+    border: none;
+    -webkit-appearance: none;
+    appearance: none;
+    position: relative;
+}
+
+.editable-canvas-colorpicker::-webkit-color-swatch-wrapper {
+    padding: 0;
+}
+
+.editable-canvas-colorpicker::-webkit-color-swatch {
+    border: none;
+}
+
+ul.drawer-toolbar li.editable-easel-plugin-color .toolbar-label {
+    position: relative;
+    top: -9px;
+}
+
+ul.drawer-toolbar li.editable-easel-plugin-color {
+    width: auto;
+    padding-left: 10px;
+    text-align: left;
+}

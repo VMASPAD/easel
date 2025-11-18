@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title></title>
+    <script src="../../lib/jquery-3.4.1.min.js"></script>
+    <script src="../../lib/jquery-migrate-1.2.1.min.js"></script>
+
+    <link href="/assets/font-awesome.min.css" rel="stylesheet">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" />
+
+    <link rel="stylesheet" href="../../dist/easel.min.css"/>
+    <script src="../../dist/easel.standalone.min.js"></script>
+</head>
+
+<body>
+<div>
+	<h3 class=text-center>Easel Demonstration</h3>
+ 
+	<div id="canvas-editor" style="position: relative; width: 100%; max-width: 1200px; height: 600px; margin: 0 auto;"></div>
+</div>
+<script>
+    $(document).ready(function () {
+        window.drawer = Easel.create({
+            container: '#canvas-editor',
+            drawerOptions: {
+                activeColor: '#a1be13',
+                lineAngleTooltip: { enabled: true, color: 'blue', fontSize: 15 },
+                editOnClick: true
+            }
+        });
+    });
+</script>
+</body>
+</html>

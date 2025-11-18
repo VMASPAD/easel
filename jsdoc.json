@@ -1,0 +1,19 @@
+{
+  "source": {
+    "include": ["src"],
+    "includePattern": ".+\\.js(doc|x)?$",
+    "excludePattern": "(node_modules/|dist/|main-styles.js)"
+  },
+  "opts": {
+    "destination": "./dist/docs",
+    "recurse": true,
+    "readme": "README.md",
+    "package": "package.json",
+    "private": false
+  },
+  "plugins": ["plugins/markdown"],
+  "templates": {
+    "cleverLinks": false,
+    "monospaceLinks": false
+  }
+}
